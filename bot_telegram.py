@@ -9,7 +9,10 @@ from datetime import date
 
 # ================= CONFIGURACIÓN =================
 
-TOKEN = "8529903726:AAEU7BLVq_3wMSCbU_Fve4kPfoXSVRADS-8"
+#TOKEN = "8529903726:AAEU7BLVq_3wMSCbU_Fve4kPfoXSVRADS-8"
+
+import os
+TOKEN = os.getenv("TOKEN")
 
 BINANCE_REF = "https://accounts.binance.com/register?ref=ROZTAFCJ"
 
