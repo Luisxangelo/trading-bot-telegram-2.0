@@ -1,33 +1,61 @@
-# binance_client.py
+# trading/binance_client.py
 
 from binance.client import Client
-from config import API_KEY, API_SECRET
+from config import BINANCE_API_KEY, BINANCE_API_SECRET
 
-# Conexión con Binance
-client = Client(API_KEY, API_SECRET)
+client = Client(BINANCE_API_KEY, BINANCE_API_SECRET)
 
-def get_price(symbol):
-    """Obtiene el precio actual de un símbolo"""
-    price = client.get_symbol_ticker(symbol=symbol)
-    return float(price['price'])
+def get_price(symbol: str) -> float:
+    """Precio actual"""
+    ticker = client.get_symbol_ticker(symbol=symbol)
+    return float(ticker["price"])
 
-def get_balance():
-    """Obtiene el saldo disponible"""
-    balance = client.get_asset_balance(asset='USDT')
-    return float(balance['free'])
 
-def place_order(symbol, side, quantity, price):
-    """Realiza una orden de compra o venta"""
-    if side == 'buy':
-        order = client.order_limit_buy(
-            symbol=symbol,
-            quantity=quantity,
-            price=str(price)
-        )
-    elif side == 'sell':
-        order = client.order_limit_sell(
-            symbol=symbol,
-            quantity=quantity,
-            price=str(price)
-        )
-    return order
+def get_klines(symbol: str, interval="5m", limit=200):
+    """
+    Velas OHLCV reales de Binance
+    """
+    klines = client.get_klines(
+        symbol=symbol,
+        interval=interval,
+        limit=limit
+    )
+
+    candles = []
+    for k in klines:
+        candles.append({
+            "open": float(k[1]),
+            "high": float(k[2]),
+            "low": float(k[3]),
+            "close": float(k[4]),
+            "volume": float(k[5]),
+            "timestamp": int(k[0])
+        })
+
+    return candles
+
+
+def get_klines_history(symbol: str, interval="5m", start_str=None, end_str=None):
+    """
+    Velas históricas (para backtesting real)
+    """
+    klines = client.get_historical_klines(
+        symbol,
+        interval,
+        start_str,
+        end_str
+    )
+
+    candles = []
+    for k in klines:
+        candles.append({
+            "open": float(k[1]),
+            "high": float(k[2]),
+            "low": float(k[3]),
+            "close": float(k[4]),
+            "volume": float(k[5]),
+            "timestamp": int(k[0])
+        })
+
+    return candles
+

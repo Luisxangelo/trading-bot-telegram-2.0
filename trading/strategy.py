@@ -1,17 +1,56 @@
-# strategy.py
+# trading/strategy.py
 
-from binance_client import get_price
+import pandas as pd
+from trading.binance_client import get_klines
 
-def should_buy(symbol):
-    """Determina si debe comprar en base a la estrategia"""
-    price = get_price(symbol)
-    if price < 30000:  # Por ejemplo, si el precio es menor que 30,000
-        return True
-    return False
+# ================= INDICADORES =================
 
-def should_sell(symbol):
-    """Determina si debe vender en base a la estrategia"""
-    price = get_price(symbol)
-    if price > 35000:  # Si el precio es mayor que 35,000
-        return True
-    return False
+def ema(series, period):
+    return series.ewm(span=period, adjust=False).mean()
+
+def rsi(series, period=14):
+    delta = series.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(period).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(period).mean()
+    rs = gain / loss
+    return 100 - (100 / (1 + rs))
+
+
+# ================= ESTRATEGIA =================
+
+def analyze(symbol: str):
+    candles = get_klines(symbol, interval="5m", limit=200)
+    df = pd.DataFrame(candles)
+
+    if len(df) < 200:
+        return None
+
+    df["ema50"] = ema(df["close"], 50)
+    df["ema200"] = ema(df["close"], 200)
+    df["rsi"] = rsi(df["close"], 14)
+    df["vol_ma"] = df["volume"].rolling(20).mean()
+
+    last = df.iloc[-1]
+    prev = df.iloc[-2]
+
+    # ========= LONG =========
+    if (
+        last["ema50"] > last["ema200"] and
+        prev["close"] < prev["ema50"] and
+        last["close"] > last["ema50"] and
+        40 <= last["rsi"] <= 55 and
+        last["volume"] > last["vol_ma"]
+    ):
+        return "BUY"
+
+    # ========= SHORT =========
+    if (
+        last["ema50"] < last["ema200"] and
+        prev["close"] > prev["ema50"] and
+        last["close"] < last["ema50"] and
+        45 <= last["rsi"] <= 60 and
+        last["volume"] > last["vol_ma"]
+    ):
+        return "SELL"
+
+    return None

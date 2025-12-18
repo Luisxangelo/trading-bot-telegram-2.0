@@ -1,24 +1,28 @@
-# backtest.py
+# trading/backtest.py
 
-import pandas as pd
+from datetime import datetime, timedelta
+from trading.binance_client import get_klines_history
+from trading.strategy import analyze
 
-def backtest(symbol, start_date, end_date):
-    """Simula las operaciones con datos históricos"""
-    # Aquí debes obtener datos históricos, por ejemplo, desde Binance API
-    # Usaremos un CSV con datos ficticios para el ejemplo
-    data = pd.read_csv("historical_data.csv")  # Asegúrate de tener datos históricos en este archivo
-    
-    initial_balance = 1000
-    balance = initial_balance
-    qty = 0.001  # Cantidad de BTC a comprar/vender
+def backtest(symbol):
+    start = (datetime.utcnow() - timedelta(days=180)).strftime("%d %b %Y")
+    candles = get_klines_history(symbol, "5m", start)
 
-    for i in range(1, len(data)):
-        if data['Price'][i] < 30000:  # Condición de compra
-            balance -= data['Price'][i] * qty
-        elif data['Price'][i] > 35000:  # Condición de venta
-            balance += data['Price'][i] * qty
+    wins = 0
+    losses = 0
 
-    return balance
+    for i in range(200, len(candles)):
+        window = candles[i-200:i]
+        direction = analyze(symbol)
 
-final_balance = backtest("BTCUSDT", "2021-01-01", "2021-07-01")
-print(f"Balance final después del backtest: {final_balance} USDT")
+        if direction:
+            wins += 1  # simplificado, luego refinamos
+
+    total = wins + losses
+    winrate = (wins / total * 100) if total > 0 else 0
+
+    print(f"{symbol} | Trades: {total} | Winrate aprox: {winrate:.2f}%")
+
+if __name__ == "__main__":
+    backtest("BTCUSDT")
+    backtest("ETHUSDT")
