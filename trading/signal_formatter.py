@@ -1,27 +1,30 @@
 # trading/signal_formatter.py
 
-def format_signal(symbol, direction, entry_price):
-    risk_pct = 0.003  # 0.3% SL (scalping)
+def format_signal_premium(trade: dict) -> str:
+    """
+    Formato profesional para señales VIP
+    """
+    symbol = trade["symbol"]
+    side = trade["side"]
+    entry = trade["entry"]
+    sl = trade["sl"]
+    tp1, tp2, tp3 = trade["tp"]
+    rr = trade["rr"]
 
-    if direction == "BUY":
-        sl = entry_price * (1 - risk_pct)
-        tp1 = entry_price * (1 + risk_pct)
-        tp2 = entry_price * (1 + risk_pct * 2)
-        tp3 = entry_price * (1 + risk_pct * 3)
-    else:
-        sl = entry_price * (1 + risk_pct)
-        tp1 = entry_price * (1 - risk_pct)
-        tp2 = entry_price * (1 - risk_pct * 2)
-        tp3 = entry_price * (1 - risk_pct * 3)
+    emoji = "🟢 LONG" if side == "BUY" else "🔴 SHORT"
 
-    return (
-        f"❗️SIGNAL ALERT❗️\n\n"
-        f"📊 #{symbol}\n"
-        f"📈 {'BUY' if direction=='BUY' else 'SELL'}\n\n"
-        f"🎯 Entrada: {entry_price:.2f}\n"
-        f"⛔️ SL: {sl:.2f}\n\n"
-        f"🏆 TP1: {tp1:.2f}\n"
-        f"🏆 TP2: {tp2:.2f}\n"
-        f"🏆 TP3: {tp3:.2f}\n\n"
-        f"⚠️ Riesgo recomendado: 1–2%"
+    message = (
+        f"❗️ *SIGNAL ALERT* ❗️\n\n"
+        f"📊 *{symbol}*\n\n"
+        f"{emoji}\n\n"
+        f"🎯 *Entrada:* `{entry}`\n"
+        f"⛔️ *Stop Loss:* `{sl}`\n\n"
+        f"🏆 *TP1:* `{tp1}`\n"
+        f"🏆 *TP2:* `{tp2}`\n"
+        f"🏆 *TP3:* `{tp3}`\n\n"
+        f"⚖️ *RR:* 1:{round(rr,2)}\n\n"
+        f"⚠️ Riesgo recomendado: *1–2%*\n"
+        f"📌 Señal educativa – no es asesoría financiera"
     )
+
+    return message

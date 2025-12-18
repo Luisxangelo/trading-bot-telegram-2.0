@@ -1,7 +1,9 @@
-from trading.strategy import analyze
+from binance.client import Client
+from config import BINANCE_API_KEY, BINANCE_API_SECRET
 
-def run_once():
-    for symbol in ["BTCUSDT", "ETHUSDT"]:
-        signal = analyze(symbol)
-        if signal:
-            print(f"{symbol} => {signal}")
+client = Client(BINANCE_API_KEY, BINANCE_API_SECRET)
+
+def execute_trade(trade):
+    # SOLO TU CUENTA
+    print("Ejecutando trade:", trade)
+    # Aquí luego colocas órdenes reales si activas permisos

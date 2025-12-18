@@ -14,12 +14,26 @@ TOKEN = "8529903726:AAEU7BLVq_3wMSCbU_Fve4kPfoXSVRADS-8"
 BINANCE_REF = "https://accounts.binance.com/register?ref=ROZTAFCJ"
 
 CANAL_FREE = "-1003648632391"
-CANAL_VIP = "-1003504953186"  # ID del canal privado VIP
+CANAL_VIP = "-1003504953186"
 
-ADMIN_IDS = [5297138695]  # TU ID DE TELEGRAM
+ADMIN_IDS = [5297138695]
 
 MAX_FREE_PER_DAY = 2
 MAX_VIP_PER_DAY = 10
+
+VIP_PRICE_TEXT = (
+    "💎 *ACCESO VIP – SEÑALES AUTOMÁTICAS*\n\n"
+    "📊 Hasta 10 señales diarias\n"
+    "🤖 Estrategia automática (BTC / ETH)\n"
+    "📈 RR dinámico + TP escalonados\n"
+    "🛑 Filtro de volatilidad y noticias\n\n"
+    "💰 *Precio:* $10 USD / mes\n\n"
+    "📩 Para acceder:\n"
+    "1️⃣ Realiza el pago\n"
+    "2️⃣ Pulsa *Solicitar Acceso*\n"
+    "3️⃣ Un admin te habilita\n\n"
+    "⚠️ Educativo – no asesoría financiera"
+)
 
 # ================= CONTADORES =================
 
@@ -36,46 +50,81 @@ def reset_if_new_day():
         signal_counter["free"] = 0
         signal_counter["vip"] = 0
 
-# ================= TECLADO PRINCIPAL =================
+# ================= TECLADO =================
 
 def main_keyboard():
-    keyboard = [
-        [InlineKeyboardButton("ℹ️ Cómo funciona", callback_data="info")],
+    return InlineKeyboardMarkup([
         [InlineKeyboardButton("📈 Canal FREE", url="https://t.me/CryptoSignalsPro_Free")],
-        [InlineKeyboardButton("💎 Canal VIP", url="https://t.me/+V3bKF5RumKNmYzJh")],
+        [InlineKeyboardButton("💎 Acceso VIP", callback_data="vip_info")],
         [InlineKeyboardButton("🟡 Registrarme en Binance", callback_data="tutorial_binance")],
-        [InlineKeyboardButton("📜 Reglas del Sistema", callback_data="rules")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
+        [InlineKeyboardButton("ℹ️ Cómo funciona", callback_data="info")],
+        [InlineKeyboardButton("📜 Reglas", callback_data="rules")]
+    ])
 
 # ================= START =================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    dashboard_text = (
-        "🟢─────────────────────────────🟢\n"
-        "🤖 *Bienvenido al Sistema de Trading Automático*\n"
-        "🟢─────────────────────────────🟢\n\n"
-        "*📊 Estado del Sistema:*\n"
-        "✅ Señales confiables y educativas\n"
-        "✅ Para todos los niveles de traders\n"
-        "❌ Resultados pasados no garantizan resultados futuros\n\n"
-        "*💹 Canales de Señales:*\n"
-        "📈 FREE: 1–2 señales diarias ✅\n"
-        "💎 VIP: Hasta 10 señales diarias + análisis avanzado ✅\n\n"
-        "*⚡ Pasos para interactuar:*\n"
-        "1️⃣ Registrarte en Binance 🟡\n"
-        "2️⃣ Elegir el canal que quieras seguir\n"
-        "3️⃣ Revisar reglas y funcionamiento\n\n"
-        "*💡 Tips Rápidos:*\n"
-        "✅ Usa Stop Loss siempre\n"
-        "✅ No arriesgues más del 1–2%\n"
-        "❌ No operes si no entiendes la señal\n\n"
-        "👇 *Usa los botones para empezar*"
+    text = (
+        "🤖 *Sistema de Trading Automático*\n\n"
+        "📊 Señales educativas basadas en reglas\n"
+        "📈 FREE y 💎 VIP disponibles\n\n"
+        "👇 Elige una opción:"
+    )
+    await update.message.reply_text(text, reply_markup=main_keyboard(), parse_mode="Markdown")
+
+# ================= VIP INFO =================
+
+async def vip_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📩 Solicitar Acceso VIP", callback_data="vip_request")],
+        [InlineKeyboardButton("🔙 Volver", callback_data="start")]
+    ])
+
+    await query.edit_message_text(
+        VIP_PRICE_TEXT,
+        reply_markup=keyboard,
+        parse_mode="Markdown"
     )
 
-    await update.message.reply_text(
-        dashboard_text,
-        reply_markup=main_keyboard(),
+# ================= VIP REQUEST =================
+
+async def vip_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user = query.from_user
+    await query.answer()
+
+    for admin_id in ADMIN_IDS:
+        await context.bot.send_message(
+            chat_id=admin_id,
+            text=(
+                f"📩 *SOLICITUD VIP*\n\n"
+                f"👤 Usuario: @{user.username or 'sin_username'}\n"
+                f"🆔 ID: {user.id}\n\n"
+                f"➡️ Revisar pago y agregar al canal VIP"
+            ),
+            parse_mode="Markdown"
+        )
+
+    await query.edit_message_text(
+        "✅ *Solicitud enviada*\n\n"
+        "Un administrador revisará tu acceso.\n"
+        "Gracias por tu interés 💎",
+        parse_mode="Markdown"
+    )
+
+# ================= INFO =================
+
+async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_text(
+        "ℹ️ *Funcionamiento*\n\n"
+        "🤖 El sistema analiza BTC y ETH\n"
+        "📊 Señales automáticas con filtros\n"
+        "⚠️ Siempre usa gestión de riesgo",
         parse_mode="Markdown"
     )
 
@@ -84,87 +133,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    text = (
-        "📜 *REGLAS DEL SISTEMA*\n\n"
-        "1️⃣ Las señales son educativas\n"
-        "2️⃣ Usa SIEMPRE Stop Loss\n"
-        "3️⃣ No arriesgues más del 1–2%\n"
-        "4️⃣ No operes si no entiendes la señal\n"
-        "5️⃣ Resultados pasados no garantizan resultados futuros\n\n"
-        "⚠️ Cada usuario es responsable de su capital"
+    await query.edit_message_text(
+        "📜 *Reglas*\n\n"
+        "1️⃣ Uso educativo\n"
+        "2️⃣ Stop Loss obligatorio\n"
+        "3️⃣ No sobreoperar\n"
+        "4️⃣ Riesgo máx 1–2%",
+        parse_mode="Markdown"
     )
-    await query.edit_message_text(text, parse_mode="Markdown")
 
-# ================= INFO =================
-
-async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    text = (
-        "ℹ️ *¿CÓMO FUNCIONA EL SISTEMA?*\n\n"
-        "📊 Analizamos múltiples pares en Binance Futures\n"
-        "🤖 Sistema automático detecta oportunidades\n"
-        "📨 Señales enviadas al canal\n\n"
-        "🔹 FREE: 1–2 señales diarias\n"
-        "🔹 VIP: Hasta 10 señales diarias\n\n"
-        "💡 Tú decides si ejecutas"
-    )
-    await query.edit_message_text(text, parse_mode="Markdown")
-
-# ================= BINANCE TUTORIAL =================
+# ================= BINANCE =================
 
 async def tutorial_binance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     await query.edit_message_text(
-        f"🟡 Regístrate en Binance aquí:\n\n{BINANCE_REF}",
+        f"🟡 Regístrate en Binance:\n{BINANCE_REF}",
         parse_mode="Markdown"
-    )
-
-# ================= ENVÍO DE SEÑALES =================
-
-async def send_free(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in ADMIN_IDS:
-        return
-
-    reset_if_new_day()
-
-    if signal_counter["free"] >= MAX_FREE_PER_DAY:
-        await update.message.reply_text("❌ Límite diario FREE alcanzado")
-        return
-
-    text = " ".join(context.args)
-    if not text:
-        await update.message.reply_text("⚠️ Usa: /send_free TEXTO")
-        return
-
-    await context.bot.send_message(chat_id=CANAL_FREE, text=text)
-    signal_counter["free"] += 1
-
-    await update.message.reply_text(
-        f"✅ Señal enviada a FREE ({signal_counter['free']}/{MAX_FREE_PER_DAY})"
-    )
-
-async def send_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in ADMIN_IDS:
-        return
-
-    reset_if_new_day()
-
-    if signal_counter["vip"] >= MAX_VIP_PER_DAY:
-        await update.message.reply_text("❌ Límite diario VIP alcanzado")
-        return
-
-    text = " ".join(context.args)
-    if not text:
-        await update.message.reply_text("⚠️ Usa: /send_vip TEXTO")
-        return
-
-    await context.bot.send_message(chat_id=CANAL_VIP, text=text)
-    signal_counter["vip"] += 1
-
-    await update.message.reply_text(
-        f"✅ Señal enviada a VIP ({signal_counter['vip']}/{MAX_VIP_PER_DAY})"
     )
 
 # ================= MAIN =================
@@ -173,13 +158,14 @@ def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("send_free", send_free))
-    app.add_handler(CommandHandler("send_vip", send_vip))
-    app.add_handler(CallbackQueryHandler(rules, pattern="^rules$"))
+    app.add_handler(CallbackQueryHandler(start, pattern="^start$"))
+    app.add_handler(CallbackQueryHandler(vip_info, pattern="^vip_info$"))
+    app.add_handler(CallbackQueryHandler(vip_request, pattern="^vip_request$"))
     app.add_handler(CallbackQueryHandler(info, pattern="^info$"))
+    app.add_handler(CallbackQueryHandler(rules, pattern="^rules$"))
     app.add_handler(CallbackQueryHandler(tutorial_binance, pattern="^tutorial_binance$"))
 
-    print("🤖 Bot corriendo correctamente...")
+    print("🤖 Bot Telegram activo")
     app.run_polling()
 
 if __name__ == "__main__":
